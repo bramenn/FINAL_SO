@@ -1,7 +1,7 @@
 import json, os, socket
 
 
-'''
+"""
 CREACION
 {
   "peticion":"POST",
@@ -39,57 +39,59 @@ NOTIFICACION
   "tipo": "notificacion",
   "contenido":"ñlkhadshfkjasdhfh"
 }
-'''
+"""
 
 
 def InfoCliente():
-	id_uss = input("Ingrese el id del cliente: ")
-	nombre_carpeta = input("Ingrese el nombre de la capeta: ")
-	return [id_uss, nombre_carpeta]
+    id_uss = input("Ingrese el id del cliente: ")
+    nombre_carpeta = input("Ingrese el nombre de la capeta: ")
+    return [id_uss, nombre_carpeta]
+
 
 def ListarCarpeta(nombre_carpeta):
-	ficheros = os.listdir(nombre_carpeta)
-	return ficheros
+    ficheros = os.listdir(nombre_carpeta)
+    return ficheros
 
 
-def leer_fichero(nombre_carpeta,nombre_fichero):
-	fd =  open (nombre_carpeta+"/"+nombre_fichero,'r')
-	contenido = fd.read()
-	return contenido
+def leer_fichero(nombre_carpeta, nombre_fichero):
+    fd = open(nombre_carpeta + "/" + nombre_fichero, "r")
+    contenido = fd.read()
+    return contenido
 
 
-'''
+"""
 {
   "peticion":"POST",
   "tipo": "creacion_c",
   "id_cliente": "123",
   "ficheros": ["fichero_1","fichero_2","fichero_3"]
 }
-'''
-#PETICIONES DE SALIDA CLIENTE
-def armar_HTTP(id_cliente, data, peticion, tipo):
+"""
+# PETICIONES DE SALIDA CLIENTE
+def HTTP_salientes(id_cliente, data, peticion, tipo):
     if peticion == "POST":
         if tipo == "ver_f":
             nombre_fichero = data[0]
             contenido = data[1]
-            mensaje =  {
-               "peticion":peticion,
-               "tipo": tipo,
-               "id_cliente":id_cliente,
-               "nombre_fichero": nombre_fichero,
-               "contenido":contenido
-             }
+            mensaje = {
+                "peticion": peticion,
+                "tipo": tipo,
+                "id_cliente": id_cliente,
+                "nombre_fichero": nombre_fichero,
+                "contenido": contenido,
+            }
         if tipo == "creacion_c":
             ficheros = data
-            mensaje =  {
-               "peticion":peticion,
-               "tipo": tipo,
-               "id_cliente":id_cliente,
-               "ficheros": ficheros
-             }
-
-
-
+            mensaje = {
+                "peticion": peticion,
+                "tipo": tipo,
+                "id_cliente": id_cliente,
+                "ficheros": ficheros,
+            }
+    if peticion == "GET":
+        if tipo == "notificacion_LISTAR_F":
+            ficheros = data
+            mensaje = {"peticion": peticion, "tipo": tipo, "id_cliente": id_cliente}
 
     JSON = json.dumps(mensaje)
     return JSON
@@ -98,37 +100,80 @@ def armar_HTTP(id_cliente, data, peticion, tipo):
 def HTTP_entrantes(HTTP):
     try:
         HTTP = eval(HTTP)
-        if HTTP['peticion'] == "POST":
-            if HTTP['tipo'] == "notificacion_OK":#SE REVISA SI EL CLIENTE YA EXISTE
-                contenido = HTTP['contenido']
+        if HTTP["peticion"] == "POST":
+            if HTTP["tipo"] == "notificacion_OK":  # SE REVISA SI EL CLIENTE YA EXISTE
+                contenido = HTTP["contenido"]
                 print("Respuesta del servidor: {}".format(contenido))
-            if HTTP['tipo'] == "notificacion_FAIL":#SE REVISA SI EL CLIENTE YA EXISTE
-                contenido = HTTP['contenido']
+            if HTTP["tipo"] == "notificacion_FAIL":  # SE REVISA SI EL CLIENTE YA EXISTE
+                contenido = HTTP["contenido"]
                 print("Respuesta del servidor: {}".format(contenido))
         else:
-            print("PETICION NO ENCONTRADA: {}". HTTP)
+            print("PETICION NO ENCONTRADA: {}".HTTP)
     except SyntaxError as e:
         print(e)
 
 
+def agregar_contenido_fichero(ficheros, carpeta):
+    fichs = []
+    for fichero in ficheros:
+        f = open(carpeta + "/" + fichero, "r")
+        contenido = f.read()
+        fichs.append({fichero: contenido})
+    return fichs
 
 
-if __name__ == '__main__':
+########################################################################
+def actu_regis():
     data_cli = InfoCliente()
     ficheros = ListarCarpeta(data_cli[1])
-    contenido = leer_fichero(data_cli[1],"prueba_2.txt")
-    data = ["prueba_2.txt", contenido]
-    res = armar_HTTP(data_cli[0],ficheros, "POST", "creacion_c")
+    ficheros = agregar_contenido_fichero(ficheros, data_cli[1])
+
+    return [data_cli[0], ficheros]
 
 
-    mi_socket = socket.socket()
-    mi_socket.connect( ('localhost', 8001) )
+def listar_ficheros():
+    id_cli_search = input("Ingrese el ID del cliente: ")
 
-    mi_socket.send(res.encode("ascii"))
-    pet = mi_socket.recv(1024)
-    pet = pet.decode("ascii")
-    HTTP_entrantes(pet)
-    mi_socket.close()
+    return [id_cli_search, ""]
 
 
-    # print("El id del cliente es: {}; Y sus ficheros son: {}".format(data_cli[0], ficheros))
+def menu():
+    print("------------------------------")
+    print("------------ MENU ------------")
+    print("1- Registrarse o actulizarse")
+    print("2- Listar ficheros de algun cliente")
+    print("0- Salir")
+    op = input("Ingrese la opcion: ")
+    if op == "1":
+        lista = actu_regis()
+        if lista:
+            lista.append("POST")
+            lista.append("creacion_c")
+    elif op == "2":
+        lista = listar_ficheros()
+        if lista:
+            lista.append("GET")
+            lista.append("notificacion_LISTAR_F")
+    elif op == "0":
+        pass
+    else:
+        print("Opcion incorrecta {}".format(op))
+        return
+    return lista
+
+
+if __name__ == "__main__":
+
+    while True:
+        mi_socket = socket.socket()
+        mi_socket.connect(("localhost", 8001))
+
+        data = menu()
+        if data:
+            res = HTTP_salientes(data[0], data[1], data[2], data[3])
+
+        mi_socket.send(res.encode("ascii"))
+        pet = mi_socket.recv(1024)
+        pet = pet.decode("ascii")
+        HTTP_entrantes(pet)
+        mi_socket.close()

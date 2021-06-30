@@ -1,1 +1,0 @@
-{"id_cliente": "000", "ficheros": ["prueba_2.txt", "prueba.txt"]}
