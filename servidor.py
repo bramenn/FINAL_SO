@@ -1,4 +1,5 @@
 import json, socket
+import threading
 
 
 def registrar_cliente(lista_clientes):
@@ -32,6 +33,21 @@ def listar_ficheros(id_cliente):
             ficheros.append(key)
 
     return ficheros
+
+
+def ver_f(id_cliente, nombre_fichero):
+    f = open(str(id_cliente) + ".txt", "r")
+    data = f.read()
+    data = json.loads(data)
+    f.close()
+    ficheros = []
+    for fichero in data["ficheros"]:
+        for key in fichero.keys():
+            if key == nombre_fichero:
+                return fichero[key]
+    return
+
+    # return ficheros
 
 
 # PETICIONES DE SALIDA
@@ -69,44 +85,55 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
             CLI = json.dumps(cliente)
             f.write(CLI)
             f.close()
-            contenido = "Se creo el actualizo correctamente {}".format(HTTP["id_cliente"])
+            contenido = "Se actualizo correctamente {}".format(HTTP["id_cliente"])
             return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
 
     elif HTTP["peticion"] == "GET":
         print(lista_clientes)
-        if HTTP["tipo"] == "notificacion_LISTAR_F" and  HTTP["id_cliente"] in lista_clientes:
+        if HTTP["tipo"] == "notificacion_LISTAR_F" and HTTP["id_cliente"] in lista_clientes:
             ficheros = listar_ficheros(HTTP["id_cliente"])
             contenido = "Los ficheros del cliente {} son: ".format(HTTP["id_cliente"])
             for fichero in ficheros:
                 contenido += "\n" + fichero
             return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
+        elif HTTP["tipo"] == "ver_f" and HTTP["id_cliente"] in lista_clientes:
+            nombre_fichero = HTTP["nombre_fichero"]
+            res = ver_f(HTTP["id_cliente"], nombre_fichero + ".txt")
+            if res:
+                contenido = "El contenido del fichero {} es:\n{}".format(nombre_fichero,res)
+                return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
+            else:
+                contenido = "NO se encontro el fichero {} en el cliente {}".format(
+                    nombre_fichero, HTTP["id_cliente"]
+                )
         else:
-            contenido = "NO se encontro el cliente a listar {}".format(HTTP["id_cliente"])
+            contenido = "NO se encontro el cliente {}".format(HTTP["id_cliente"])
         return HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
     else:
         contenido = "NO se reconocio la peticion {}".format(HTTP)
         return HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
 
-
+def crear_hilo_c(conexion, addr):
+    pet = conexion.recv(2048)
+    if pet != "NoneType":
+        pet = pet.decode("ascii")
+        print(pet)
+        lista_clientes = cargar_clientes()
+        res = HTTP_entrantes(pet, lista_clientes, "")
+    else:
+        contenido = "La peticion NO se ejecuto correctamente no se envio informacio en la data"
+        res = HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
+    conexion.send(res.encode("ascii"))
 if __name__ == "__main__":
 
     mi_socket = socket.socket()
-    mi_socket.bind(("localhost", 8001))
+    mi_socket.bind(("localhost", 8000))
     mi_socket.listen(5)
 
     while True:
         conexion, addr = mi_socket.accept()
         print("Nueva conexion establecida", addr)
-
-        pet = conexion.recv(1024)
-        if pet != "NoneType":
-            pet = pet.decode("ascii")
-            print(pet)
-            lista_clientes = cargar_clientes()
-            res = HTTP_entrantes(pet, lista_clientes, "")
-        else:
-            contenido = "La peticion NO se ejecuto correctamente no se envio informacio en la data"
-            res = HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
-        conexion.send(res.encode("ascii"))
-
+        if addr:
+            hilo = threading.Thread(target=crear_hilo_c, args=(conexion,addr,))
+            hilo.start()
         conexion.close()

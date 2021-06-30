@@ -61,7 +61,7 @@ def leer_fichero(nombre_carpeta, nombre_fichero):
 
 """
 {
-  "peticion":"POST",
+  "peticion":"GET",
   "tipo": "creacion_c",
   "id_cliente": "123",
   "ficheros": ["fichero_1","fichero_2","fichero_3"]
@@ -70,16 +70,6 @@ def leer_fichero(nombre_carpeta, nombre_fichero):
 # PETICIONES DE SALIDA CLIENTE
 def HTTP_salientes(id_cliente, data, peticion, tipo):
     if peticion == "POST":
-        if tipo == "ver_f":
-            nombre_fichero = data[0]
-            contenido = data[1]
-            mensaje = {
-                "peticion": peticion,
-                "tipo": tipo,
-                "id_cliente": id_cliente,
-                "nombre_fichero": nombre_fichero,
-                "contenido": contenido,
-            }
         if tipo == "creacion_c":
             ficheros = data
             mensaje = {
@@ -89,6 +79,14 @@ def HTTP_salientes(id_cliente, data, peticion, tipo):
                 "ficheros": ficheros,
             }
     if peticion == "GET":
+        if tipo == "ver_f":
+            nombre_fichero = data
+            mensaje = {
+                "peticion": peticion,
+                "tipo": tipo,
+                "id_cliente": id_cliente,
+                "nombre_fichero": nombre_fichero,
+            }
         if tipo == "notificacion_LISTAR_F":
             ficheros = data
             mensaje = {"peticion": peticion, "tipo": tipo, "id_cliente": id_cliente}
@@ -137,11 +135,24 @@ def listar_ficheros():
     return [id_cli_search, ""]
 
 
+def solitud_ver_f():
+
+    id_cliente = input("Ingrese el ID del cliente: ")
+    fichero = input("Ingrese archivo que quiere visualizar: ")
+
+    return [id_cliente, fichero]
+    
+def eliminar_f():
+    id_cliente = input("Ingrese el ID del cliente: ")
+    fichero = input("Ingrese archivo que quiere eliminar: ")
+
 def menu():
     print("------------------------------")
     print("------------ MENU ------------")
     print("1- Registrarse o actulizarse")
     print("2- Listar ficheros de algun cliente")
+    print("3- Ver contenido de un fichero")
+    print("4- Eliminar un fichero")
     print("0- Salir")
     op = input("Ingrese la opcion: ")
     if op == "1":
@@ -154,6 +165,16 @@ def menu():
         if lista:
             lista.append("GET")
             lista.append("notificacion_LISTAR_F")
+    elif op == "3":
+        lista = solitud_ver_f()
+        if lista:
+            lista.append("GET")
+            lista.append("ver_f")
+    elif op == "4":
+        lista = eliminar_f()
+        if lista:
+            lista.append("GET")
+            lista.append("ver_f")
     elif op == "0":
         pass
     else:
@@ -166,14 +187,14 @@ if __name__ == "__main__":
 
     while True:
         mi_socket = socket.socket()
-        mi_socket.connect(("localhost", 8001))
+        mi_socket.connect(("localhost", 8000))
 
         data = menu()
         if data:
             res = HTTP_salientes(data[0], data[1], data[2], data[3])
 
         mi_socket.send(res.encode("ascii"))
-        pet = mi_socket.recv(1024)
+        pet = mi_socket.recv(2048)
         pet = pet.decode("ascii")
         HTTP_entrantes(pet)
         mi_socket.close()
