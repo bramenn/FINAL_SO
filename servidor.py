@@ -1,6 +1,8 @@
 import json, socket
 import threading
 
+from pyngrok import ngrok
+
 
 def registrar_cliente(lista_clientes):
     f = open("clientes.txt", "w")
@@ -100,7 +102,7 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
             nombre_fichero = HTTP["nombre_fichero"]
             res = ver_f(HTTP["id_cliente"], nombre_fichero + ".txt")
             if res:
-                contenido = "El contenido del fichero {} es:\n{}".format(nombre_fichero,res)
+                contenido = "El contenido del fichero {} es:\n{}".format(nombre_fichero, res)
                 return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
             else:
                 contenido = "NO se encontro el fichero {} en el cliente {}".format(
@@ -113,6 +115,7 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
         contenido = "NO se reconocio la peticion {}".format(HTTP)
         return HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
 
+
 def crear_hilo_c(conexion, addr):
     pet = conexion.recv(2048)
     if pet != "NoneType":
@@ -124,16 +127,64 @@ def crear_hilo_c(conexion, addr):
         contenido = "La peticion NO se ejecuto correctamente no se envio informacio en la data"
         res = HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
     conexion.send(res.encode("ascii"))
+    conexion.close()
+
+
+# if __name__ == "__main__":
+
+#     mi_socket = socket.socket()
+#     mi_socket.bind(("localhost", 8000))
+#     mi_socket.listen(5)
+
+#     while True:
+#         conexion, addr = mi_socket.accept()
+#         print("Nueva conexion establecida", addr)
+#         if addr and conexion:
+#             hilo = threading.Thread(
+#                 target=crear_hilo_c,
+#                 args=(
+#                     conexion,
+#                     addr,
+#                 ),
+#             )
+#             hilo.start()
+
+
 if __name__ == "__main__":
 
-    mi_socket = socket.socket()
-    mi_socket.bind(("localhost", 8000))
+    host = "localhost"
+    port = 8000
+
+    # Create a TCP socket
+    mi_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Bind a local socket to the port
+    server_address = ("", port)
+
+    mi_socket.bind(server_address)
     mi_socket.listen(5)
 
+    public_url = ngrok.connect(port, "tcp", options={"remote_addr": "{}:{}".format(host, port)})
+    print('ngrok tunnel "{}" -> "tcp://127.0.0.1:{}/"'.format(public_url, port))
     while True:
-        conexion, addr = mi_socket.accept()
-        print("Nueva conexion establecida", addr)
-        if addr:
-            hilo = threading.Thread(target=crear_hilo_c, args=(conexion,addr,))
-            hilo.start()
-        conexion.close()
+        connection = None
+        try:
+            conexion, addr = mi_socket.accept()
+            print("Nueva conexion establecida", addr)
+            if addr and conexion:
+                hilo = threading.Thread(
+                    target=crear_hilo_c,
+                    args=(
+                        conexion,
+                        addr,
+                    ),
+                )
+                hilo.start()
+        except KeyboardInterrupt:
+            print(" Shutting down server.")
+
+            if connection:
+                connection.close()
+            break
+
+    mi_socket.close()

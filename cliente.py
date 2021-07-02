@@ -1,3 +1,4 @@
+from pyngrok import ngrok
 import json, os, socket
 
 
@@ -183,11 +184,33 @@ def menu():
     return lista
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
+#     while True:
+#         mi_socket = socket.socket()
+#         mi_socket.connect("https://61998a737ee3.ngrok.io")
+
+#         data = menu()
+#         if data:
+#             res = HTTP_salientes(data[0], data[1], data[2], data[3])
+
+#         mi_socket.send(res.encode("ascii"))
+#         pet = mi_socket.recv(2048)
+#         pet = pet.decode("ascii")
+#         HTTP_entrantes(pet)
+#         mi_socket.close()
+
+
+if __name__ == "__main__":
+    host = "6.tcp.ngrok.io"
+    port = 17110
     while True:
-        mi_socket = socket.socket()
-        mi_socket.connect(("localhost", 8000))
+        # Create a TCP socket
+        mi_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Connect to the server with the socket via our ngrok tunnel
+        server_address = (host, port)
+        mi_socket.connect(server_address)
 
         data = menu()
         if data:
