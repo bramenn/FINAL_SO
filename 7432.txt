@@ -1,0 +1,1 @@
+{"id_cliente": "7432", "ficheros": [{"copia.txt": "cualquier cosa\n"}, {"original.txt": "cualquier cosa\n"}]}
