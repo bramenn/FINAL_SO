@@ -108,6 +108,9 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
                 contenido = "NO se encontro el fichero {} en el cliente {}".format(
                     nombre_fichero, HTTP["id_cliente"]
                 )
+        elif HTTP["tipo"] == "ver_clientes":
+            contenido = cargar_clientes()
+            return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
         else:
             contenido = "NO se encontro el cliente {}".format(HTTP["id_cliente"])
         return HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
@@ -122,7 +125,7 @@ def crear_hilo_c(conexion, addr):
         pet = pet.decode("ascii")
         print(pet)
         lista_clientes = cargar_clientes()
-        res = HTTP_entrantes(pet, lista_clientes, "")
+        res = HTTP_entrantes(HTTP=pet, lista_clientes=lista_clientes, contenido="")
     else:
         contenido = "La peticion NO se ejecuto correctamente no se envio informacio en la data"
         res = HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
