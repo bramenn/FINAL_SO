@@ -1,5 +1,6 @@
 import json, socket
 import threading
+from threading import Thread
 
 from pyngrok import ngrok
 
@@ -110,7 +111,7 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
                 )
         elif HTTP["tipo"] == "ver_clientes":
             contenido = cargar_clientes()
-            return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
+            return HTTP_salientes("", "POST", "notificacion_OK", contenido)
         else:
             contenido = "NO se encontro el cliente {}".format(HTTP["id_cliente"])
         return HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
@@ -119,8 +120,8 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
         return HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
 
 
-def crear_hilo_c(conexion, addr):
-    pet = conexion.recv(2048)
+def recivir_responder(conexion, addr):
+    pet = conexion.recv(100000)
     if pet != "NoneType":
         pet = pet.decode("ascii")
         print(pet)
@@ -130,7 +131,7 @@ def crear_hilo_c(conexion, addr):
         contenido = "La peticion NO se ejecuto correctamente no se envio informacio en la data"
         res = HTTP_salientes("", "POST", "notificacion_FAIL", contenido)
     conexion.send(res.encode("ascii"))
-    conexion.close()
+    # conexion.close()
 
 
 # if __name__ == "__main__":
@@ -153,8 +154,33 @@ def crear_hilo_c(conexion, addr):
 #             hilo.start()
 
 
-if __name__ == "__main__":
+class Client(Thread):
+    """
+    Servidor eco - reenvía todo lo recibido.
+    """
+    
+    def __init__(self, conn, addr):
+        # Inicializar clase padre.
+        Thread.__init__(self)
+        
+        self.conn = conn
+        self.addr = addr
+        self.id_cliente = ""
+    def run(self):
+        while True:
+            try:
+                # Recibir datos del cliente.
+                recivir_responder(self.conn, self.addr)
+            except SyntaxError:
+                print("[%s] Error de lectura." % self.name)
+                break
+            # else:
+            #     # Reenviar la información recibida.
+            #     if input_data:
+            #         self.conn.send(input_data)
 
+if __name__ == "__main__":
+    
     host = "localhost"
     port = 8000
 
@@ -169,25 +195,33 @@ if __name__ == "__main__":
 
     public_url = ngrok.connect(port, "tcp", options={"remote_addr": "{}:{}".format(host, port)})
     print('ngrok tunnel "{}" -> "tcp://127.0.0.1:{}/"'.format(public_url, port))
+    hilos = []
     while True:
         connection = None
         try:
             conexion, addr = mi_socket.accept()
+            c = Client(conn=conexion, addr=addr)
+            c.start()
+            hilos.append(c)
             print("Nueva conexion establecida", addr)
-            if addr and conexion:
-                hilo = threading.Thread(
-                    target=crear_hilo_c,
-                    args=(
-                        conexion,
-                        addr,
-                    ),
-                )
-                hilo.start()
+            print(len(hilos))
+            # if addr and conexion:
+            #     hilo = threading.Thread(
+            #         target=crear_hilo_c,
+            #         args=(
+            #             conexion,
+            #             addr,
+            #         ),
+            #     )
+            #     hilo.start()
         except KeyboardInterrupt:
             print(" Shutting down server.")
-
-            if connection:
-                connection.close()
+            connection.close()
+            # if connection:
+            #     connection.close()
             break
 
     mi_socket.close()
+
+
+

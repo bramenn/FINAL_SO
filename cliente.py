@@ -93,6 +93,7 @@ def HTTP_salientes(id_cliente, data, peticion, tipo):
             mensaje = {
                 "peticion": peticion,
                 "tipo": tipo,
+                "id_cliente": id_cliente,
             }
         if tipo == "notificacion_LISTAR_F":
             ficheros = data
@@ -115,7 +116,7 @@ def HTTP_entrantes(HTTP):
         else:
             print("PETICION NO ENCONTRADA: {}".HTTP)
     except SyntaxError as e:
-        print(e)
+        print(e, "ESTE ERROR FUE RECIBIENDO UNA HTTP")
 
 
 def agregar_contenido_fichero(ficheros, carpeta):
@@ -148,7 +149,8 @@ def solitud_ver_f():
     fichero = input("Ingrese archivo que quiere visualizar: ")
 
     return [id_cliente, fichero]
-    
+
+
 def eliminar_f():
     id_cliente = input("Ingrese el ID del cliente: ")
     fichero = input("Ingrese archivo que quiere eliminar: ")
@@ -184,10 +186,9 @@ def menu():
             lista.append("GET")
             lista.append("ver_f")
     elif op == "5":
-        lista = eliminar_f()
-        if lista:
-            lista.append("GET")
-            lista.append("ver_clientes")
+        lista = ["",""]
+        lista.append("GET")
+        lista.append("ver_clientes")
     elif op == "0":
         pass
     else:
@@ -214,26 +215,23 @@ def menu():
 
 
 if __name__ == "__main__":
-    host = "6.tcp.ngrok.io"
-    port = 17110
+    host = "localhost"
+    port = 8000
+    mi_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_address = (host, port)
+    mi_socket.connect(server_address)
     while True:
         # Create a TCP socket
-        mi_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Connect to the server with the socket via our ngrok tunnel
-        server_address = (host, port)
-        mi_socket.connect(server_address)
-
+        # print(mi_socket.getsockname())
         data = menu()
         if data:
             res = HTTP_salientes(id_cliente=data[0], data=data[1], peticion=data[2], tipo=data[3])
-            mi_socket.send(res.encode('ascii'))
-            print(f"res.encode(ascii) {res.encode('ascii')}")
+            mi_socket.send(res.encode("ascii"))
         else:
             print("Error creando la data")
-        pet = mi_socket.recv(2048)
-        pet = pet.decode('ascii')
+        pet = mi_socket.recv(100000)
+        pet = pet.decode("ascii")
         HTTP_entrantes(pet)
-        # op = input("Cerrar conexion [S/N]").lower()
-        # if op == "s":
-        mi_socket.close()
+        # mi_socket.close()

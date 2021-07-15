@@ -1,0 +1,420 @@
+This page intentionally left blank
+Algorithms
+FOURTH EDITION
+This page intentionally left blank
+Algorithms
+Robert Sedgewick
+and
+Kevin Wayne
+Princeton University
+FOURTH EDITION
+Upper Saddle River, NJ • Boston • Indianapolis • San Francisco
+New York • Toronto • Montreal • London • Munich • Paris • Madrid
+Capetown • Sydney • Tokyo • Singapore • Mexico City
+Many of the designations used by manufacturers and sellers to distinguish their products are claimed as
+trademarks. Where those designations appear in this book, and the publisher was aware of a trademark
+claim, the designations have been printed with initial capital letters or in all capitals.
+The authors and publisher have taken care in the preparation of this book, but make no expressed or implied
+warranty of any kind and assume no responsibility for errors or omissions. No liability is assumed
+for incidental or consequential damages in connection with or arising out of the use of the information or
+programs contained herein.
+The publisher offers excellent discounts on this book when ordered in quantity for bulk purchases or
+special sales, which may include electronic versions and/or custom covers and content particular to your
+business, training goals, marketing focus, and branding interests. For more information, please contact:
+U.S. Corporate and Government Sales
+(800) 382-3419
+corpsales@pearsontechgroup.com
+For sales outside the United States, please contact:
+International Sales
+international@pearson.com
+Visit us on the Web: informit.com/aw
+Cataloging-in-Publication Data is on file with the Library of Congress.
+Copyright © 2011 Pearson Education, Inc.
+All rights reserved. Printed in the United States of America. This publication is protected by copyright,
+and permission must be obtained from the publisher prior to any prohibited reproduction, storage in
+a retrieval system, or transmission in any form or by any means, electronic, mechanical, photocopying,
+recording, or likewise. For information regarding permissions, write to:
+Pearson Education, Inc.
+Rights and Contracts Department
+501 Boylston Street, Suite 900
+Boston, MA 02116
+Fax: (617) 671-3447
+ISBN-13: 978-0-321-57351-3
+ISBN-10: 0-321-57351-X
+Text printed in the United States on recycled paper at Courier in Westford, Massachusetts.
+First printing, March 2011
+______________________________
+To Adam, Andrew, Brett, Robbie
+and especially Linda
+______________________________
+___________________
+To Jackie and Alex
+___________________
+vi
+Preface . . . . . . . . . . . . . . . . . . . . . . . . .viii
+1 Fundamentals . . . . . . . . . . . . . . . . . . . . . .3
+1.1 Basic Programming Model 8
+1.2 Data Abstraction 64
+1.3 Bags, Queues, and Stacks 120
+1.4 Analysis of Algorithms 172
+1.5 Case Study: Union-Find 216
+2 Sorting . . . . . . . . . . . . . . . . . . . . . . . 243
+2.1 Elementary Sorts 244
+2.2 Mergesort 270
+2.3 Quicksort 288
+2.4 Priority Queues 308
+2.5 Applications 336
+3 Searching . . . . . . . . . . . . . . . . . . . . . . 361
+3.1 Symbol Tables 362
+3.2 Binary Search Trees 396
+3.3 Balanced Search Trees 424
+3.4 Hash Tables 458
+3.5 Applications 486
+CONTENTS
+vii
+4 Graphs . . . . . . . . . . . . . . . . . . . . . . . 515
+4.1 Undirected Graphs 518
+4.2 Directed Graphs 566
+4.3 Minimum Spanning Trees 604
+4.4 Shortest Paths 638
+5 Strings . . . . . . . . . . . . . . . . . . . . . . . 695
+5.1 String Sorts 702
+5.2 Tries 730
+5.3 Substring Search 758
+5.4 Regular Expressions 788
+5.5 Data Compression 810
+6 Context . . . . . . . . . . . . . . . . . . . . . . . 853
+Index . . . . . . . . . . . . . . . . . . . . . . . . . 933
+Algorithms . . . . . . . . . . . . . . . . . . . . . . 954
+Clients . . . . . . . . . . . . . . . . . . . . . . . . 955
+viii
+This book is intended to survey the most important computer algorithms in use today,
+and to teach fundamental techniques to the growing number of people in need of
+knowing them. It is intended for use as a textbook for a second course in computer
+science, after students have acquired basic programming skills and familiarity with computer
+systems. The book also may be useful for self-study or as a reference for people engaged in
+the development of computer systems or applications programs, since it contains implementations
+of useful algorithms and detailed information on performance characteristics and
+clients. The broad perspective taken makes the book an appropriate introduction to the field.
+the study of algorithms and data structures is fundamental to any computerscience
+curriculum, but it is not just for programmers and computer-science students. Everyone
+who uses a computer wants it to run faster or to solve larger problems. The algorithms
+in this book represent a body of knowledge developed over the last 50 years that has become
+indispensable. From N-body simulation problems in physics to genetic-sequencing problems
+in molecular biology, the basic methods described here have become essential in scientific
+research; from architectural modeling systems to aircraft simulation, they have become essential
+tools in engineering; and from database systems to internet search engines, they have
+become essential parts of modern software systems. And these are but a few examples—as the
+scope of computer applications continues to grow, so grows the impact of the basic methods
+covered here.
+Before developing our fundamental approach to studying algorithms, we develop data
+types for stacks, queues, and other low-level abstractions that we use throughout the book.
+Then we survey fundamental algorithms for sorting, searching, graphs, and strings. The last
+chapter is an overview placing the rest of the material in the book in a larger context.
+PREFACE
+ix
+Distinctive features The orientation of the book is to study algorithms likely to be of
+practical use. The book teaches a broad variety of algorithms and data structures and provides
+sufficient information about them that readers can confidently implement, debug, and
+put them to work in any computational environment. The approach involves:
+Algorithms. Our descriptions of algorithms are based on complete implementations and on
+a discussion of the operations of these programs on a consistent set of examples. Instead of
+presenting pseudo-code, we work with real code, so that the programs can quickly be put to
+practical use. Our programs are written in Java, but in a style such that most of our code can
+be reused to develop implementations in other modern programming languages.
+Data types. We use a modern programming style based on data abstraction, so that algorithms
+and their data structures are encapsulated together.
+Applications. Each chapter has a detailed description of applications where the algorithms
+described play a critical role. These range from applications in physics and molecular biology,
+to engineering computers and systems, to familiar tasks such as data compression and searching
+on the web.
+A scientific approach. We emphasize developing mathematical models for describing the
+performance of algorithms, using the models to develop hypotheses about performance, and
+then testing the hypotheses by running the algorithms in realistic contexts.
+Breadth of coverage. We cover basic abstract data types, sorting algorithms, searching algorithms,
+graph processing, and string processing. We keep the material in algorithmic context,
+describing data structures, algorithm design paradigms, reduction, and problem-solving
+models. We cover classic methods that have been taught since the 1960s and new methods
+that have been invented in recent years.
+Our primary goal is to introduce the most important algorithms in use today to as wide an
+audience as possible. These algorithms are generally ingenious creations that, remarkably, can
+each be expressed in just a dozen or two lines of code. As a group, they represent problemsolving
+power of amazing scope. They have enabled the construction of computational artifacts,
+the solution of scientific problems, and the development of commercial applications
+that would not have been feasible without them.
+x
+Booksite An important feature of the book is its relationship to the booksite
+algs4.cs.princeton.edu. This site is freely available and contains an extensive amount of
+material about algorithms and data structures, for teachers, students, and practitioners, including:
+An online synopsis. The text is summarized in the booksite to give it the same overall structure
+as the book, but linked so as to provide easy navigation through the material.
+Full implementations. All code in the book is available on the booksite, in a form suitable for
+program development. Many other implementations are also available, including advanced
+implementations and improvements described in the book, answers to selected exercises, and
+client code for various applications. The emphasis is on testing algorithms in the context of
+meaningful applications.
+Exercises and answers. The booksite expands on the exercises in the book by adding drill
+exercises (with answers available with a click), a wide variety of examples illustrating the
+reach of the material, programming exercises with code solutions, and challenging problems.
+Dynamic visualizations. Dynamic simulations are impossible in a printed book, but the
+website is replete with implementations that use a graphics class to present compelling visual
+demonstrations of algorithm applications.
+Course materials. A complete set of lecture slides is tied directly to the material in the book
+and on the booksite. A full selection of programming assignments, with check lists, test data,
+and preparatory material, is also included.
+Links to related material. Hundreds of links lead students to background information about
+applications and to resources for studying algorithms.
+Our goal in creating this material was to provide a complementary approach to the ideas.
+Generally, you should read the book when learning specific algorithms for the first time or
+when trying to get a global picture, and you should use the booksite as a reference when programming
+or as a starting point when searching for more detail while online.
+xi
+Use in the curriculum The book is intended as a textbook in a second course in computer
+science. It provides full coverage of core material and is an excellent vehicle for students
+to gain experience and maturity in programming, quantitative reasoning, and problemsolving.
+Typically, one course in computer science will suffice as a prerequisite—the book is
+intended for anyone conversant with a modern programming language and with the basic
+features of modern computer systems.
+The algorithms and data structures are expressed in Java, but in a style accessible to
+people fluent in other modern languages. We embrace modern Java abstractions (including
+generics) but resist dependence upon esoteric features of the language.
+Most of the mathematical material supporting the analytic results is self-contained (or
+is labeled as beyond the scope of this book), so little specific preparation in mathematics is
+required for the bulk of the book, although mathematical maturity is definitely helpful. Applications
+are drawn from introductory material in the sciences, again self-contained.
+The material covered is a fundamental background for any student intending to major
+in computer science, electrical engineering, or operations research, and is valuable for any
+student with interests in science, mathematics, or engineering.
+Context The book is intended to follow our introductory text, An Introduction to Programming
+in Java: An Interdisciplinary Approach, which is a broad introduction to the field.
+Together, these two books can support a two- or three-semester introduction to computer science
+that will give any student the requisite background to successfully address computation
+in any chosen field of study in science, engineering, or the social sciences.
+The starting point for much of the material in the book was the Sedgewick series of Algorithms
+books. In spirit, this book is closest to the first and second editions of that book, but
+this text benefits from decades of experience teaching and learning that material. Sedgewick’s
+current Algorithms in C/C++/Java, Third Edition is more appropriate as a reference or a text
+for an advanced course; this book is specifically designed to be a textbook for a one-semester
+course for first- or second-year college students and as a modern introduction to the basics
+and a reference for use by working programmers.
+xii
+Acknowledgments This book has been nearly 40 years in the making, so full recognition
+of all the people who have made it possible is simply not feasible. Earlier editions of this
+book list dozens of names, including (in alphabetical order) Andrew Appel, Trina Avery, Marc
+Brown, Lyn Dupré, Philippe Flajolet, Tom Freeman, Dave Hanson, Janet Incerpi, Mike Schidlowsky,
+Steve Summit, and Chris Van Wyk. All of these people deserve acknowledgement,
+even though some of their contributions may have happened decades ago. For this fourth
+edition, we are grateful to the hundreds of students at Princeton and several other institutions
+who have suffered through preliminary versions of the work, and to readers around the world
+for sending in comments and corrections through the booksite.
+We are grateful for the support of Princeton University in its unwavering commitment
+to excellence in teaching and learning, which has provided the basis for the development of
+this work.
+Peter Gordon has provided wise counsel throughout the evolution of this work almost
+from the beginning, including a gentle introduction of the “back to the basics” idea that is
+the foundation of this edition. For this fourth edition, we are grateful to Barbara Wood for
+her careful and professional copyediting, to Julie Nahil for managing the production, and
+to many others at Pearson for their roles in producing and marketing the book. All were extremely
+responsive to the demands of a rather tight schedule without the slightest sacrifice to
+the quality of the result.
+Robert Sedgewick
+Kevin Wayne
+Princeton, NJ
+January, 2011
+This page intentionally left blank
+1.1 Basic Programming Model. . . . . . . . . 8
+1.2 Data Abstraction . . . . . . . . . . . . . . 64
+1.3 Bags, Queues, and Stacks . . . . . . . 120
+1.4 Analysis of Algorithms . . . . . . . . . 172
+1.5 Case Study: Union-Find. . . . . . . . . 216
+ONE
+Fundamentals
+The objective of this book is to study a broad variety of important and useful
+algorithms—methods for solving problems that are suited for computer implementation.
+Algorithms go hand in hand with data structures—schemes for organizing
+data that leave them amenable to efficient processing by an algorithm. This
+chapter introduces the basic tools that we need to study algorithms and data structures.
+First, we introduce our basic programming model. All of our programs are implemented
+using a small subset of the Java programming language plus a few of our own
+libraries for input/output and for statistical calculations. Section 1.1 is a summary of
+language constructs, features, and libraries that we use in this book.
+Next, we emphasize data abstraction, where we define abstract data types (ADTs) in
+the service of modular programming. In Section 1.2 we introduce the process of implementing
+an ADT in Java, by specifying an applications programming interface (API)
+and then using the Java class mechanism to develop an implementation for use in client
+code.
+As important and useful examples, we next consider three fundamental ADTs: the
+bag, the queue, and the stack. Section 1.3 describes APIs and implementations of bags,
+queues, and stacks using arrays, resizing arrays, and linked lists that serve as models and
+starting points for algorithm implementations throughout the book.
+Performance is a central consideration in the study of algorithms. Section 1.4 describes
+our approach to analyzing algorithm performance. The basis of our approach is
+the scientific method: we develop hypotheses about performance, create mathematical
+models, and run experiments to test them, repeating the process as necessary.
+We conclude with a case study where we consider solutions to a connectivity problem
+that uses algorithms and data structures that implement the classic union-find ADT.
+3
+Algorithms When we write a computer program, we are generally implementing a
+method that has been devised previously to solve some problem. This method is often
+independent of the particular programming language being used—it is likely to be
+equally appropriate for many computers and many programming languages. It is the
+method, rather than the computer program itself, that specifies the steps that we can
+take to solve the problem. The term algorithm is used in computer science to describe
+a finite, deterministic, and effective problem-solving method suitable for implementation
+as a computer program. Algorithms are the stuff of computer science: they are
+central objects of study in the field.
+We can define an algorithm by describing a procedure for solving a problem in a
+natural language, or by writing a computer program that implements the procedure,
+as shown at right for Euclid’s algorithm for finding the greatest common divisor of
+two numbers, a variant of which was devised
+over 2,300 years ago. If you are not familiar
+with Euclid’s algorithm, you are encouraged
+to work Exercise 1.1.24 and Exercise
+1.1.25, perhaps after reading Section 1.1. In
+this book, we use computer programs to describe
+algorithms. One important reason for
+doing so is that it makes easier the task of
+checking whether they are finite, deterministic,
+and effective, as required. But it is also
+important to recognize that a program in a
+particular language is just one way to express
+an algorithm. The fact that many of the algorithms
+in this book have been expressed
+in multiple programming languages over the
+past several decades reinforces the idea that each algorithm is a method suitable for
+implementation on any computer in any programming language.
+Most algorithms of interest involve organizing the data involved in the computation.
+Such organization leads to data structures, which also are central objects of study
+in computer science. Algorithms and data structures go hand in hand. In this book we
+take the view that data structures exist as the byproducts or end products of algorithms
+and that we must therefore study them in order to understand the algorithms. Simple
+algorithms can give rise to complicated data structures and, conversely, complicated
+algorithms can use simple data structures. We shall study the properties of many data
+structures in this book; indeed, we might well have titled the book Algorithms and Data
+Structures.
+Compute the greatest common divisor of
+two nonnegative integers p and q as follows:
+If q is 0, the answer is p. If not, divide p by q
+and take the remainder r. The answer is the
+greatest common divisor of q and r.
+public static int gcd(int p, int q)
+{
+if (q == 0) return p;
+int r = p % q;
+return gcd(q, r);
+}
+Euclid’s algorithm
+Java-language description
+English-language description
+4 CHAPTER 1 ■ Fundamentals
+When we use a computer to help us solve a problem, we typically are faced with a
+number of possible approaches. For small problems, it hardly matters which approach
+we use, as long as we have one that correctly solves the problem. For huge problems (or
+applications where we need to solve huge numbers of small problems), however, we
+quickly become motivated to devise methods that use time and space efficiently.
+The primary reason to learn about algorithms is that this discipline gives us the
+potential to reap huge savings, even to the point of enabling us to do tasks that would
+otherwise be impossible. In an application where we are processing millions of objects,
+it is not unusual to be able to make a program millions of times faster by using a welldesigned
+algorithm. We shall see such examples on numerous occasions throughout
+the book. By contrast, investing additional money or time to buy and install a new
+computer holds the potential for speeding up a program by perhaps a factor of only 10
+or 100. Careful algorithm design is an extremely effective part of the process of solving
+a huge problem, whatever the applications area.
+When developing a huge or complex computer program, a great deal of effort must
+go into understanding and defining the problem to be solved, managing its complexity,
+and decomposing it into smaller subtasks that can be implemented easily. Often,
+many of the algorithms required after the decomposition are trivial to implement. In
+most cases, however, there are a few algorithms whose choice is critical because most
+of the system resources will be spent running those algorithms. These are the types of
+algorithms on which we concentrate in this book. We study fundamental algorithms
+that are useful for solving challenging problems in a broad variety of applications areas.
+The sharing of programs in computer systems is becoming more widespread, so
+although we might expect to be using a large fraction of the algorithms in this book, we
+also might expect to have to implement only a small fraction of them. For example, the
+Java libraries contain implementations of a host of fundamental algorithms. However,
+implementing simple versions of basic algorithms helps us to understand them better
+and thus to more effectively use and tune advanced versions from a library. More
+important, the opportunity to reimplement basic algorithms arises frequently. The primary
+reason to do so is that we are faced, all too often, with completely new computing
+environments (hardware and software) with new features that old implementations
+may not use to best advantage. In this book, we concentrate on the simplest reasonable
+implementations of the best algorithms. We do pay careful attention to coding the critical
+parts of the algorithms, and take pains to note where low-level optimization effort
+could be most beneficial.
+The choice of the best algorithm for a particular task can be a complicated process,
+perhaps involving sophisticated mathematical analysis. The branch of computer science
+that comprises the study of such questions is called analysis of algorithms. Many
+CHAPTER 1 ■ Fundamentals 5
+of the algorithms that we study have been shown through analysis to have excellent
+theoretical performance; others are simply known to work well through experience.
+Our primary goal is to learn reasonable algorithms for important tasks, yet we shall also
+pay careful attention to comparative performance of the methods. We should not use
+an algorithm without having an idea of what resources it might consume, so we strive
+to be aware of how our algorithms might be expected to perform.
+Summary of topics As an overview, we describe the major parts of the book, giving
+specific topics covered and an indication of our general orientation toward the
+material. This set of topics is intended to touch on as many fundamental algorithms as
+possible. Some of the areas covered are core computer-science areas that we study in
+depth to learn basic algorithms of wide applicability. Other algorithms that we discuss
+are from advanced fields of study within computer science and related fields. The algorithms
+that we consider are the products of decades of research and development and
+continue to play an essential role in the ever-expanding applications of computation.
+Fundamentals (Chapter 1) in the context of this book are the basic principles and
+methodology that we use to implement, analyze, and compare algorithms. We consider
+our Java programming model, data abstraction, basic data structures, abstract data
+types for collections, methods of analyzing algorithm performance, and a case study.
+Sorting algorithms (Chapter 2) for rearranging arrays in order are of fundamental
+importance. We consider a variety of algorithms in considerable depth, including insertion
+sort, selection sort, shellsort, quicksort, mergesort, and heapsort. We also encounter
+algorithms for several related problems, including priority queues, selection,
+and merging. Many of these algorithms will find application as the basis for other algorithms
+later in the book.
+Searching algorithms (Chapter 3) for finding specific items among large collections
+of items are also of fundamental importance. We discuss basic and advanced methods
+for searching, including binary search trees, balanced search trees, and hashing. We
+note relationships among these methods and compare performance.
+Graphs (Chapter 4) are sets of objects and connections, possibly with weights and
+orientation. Graphs are useful models for a vast number of difficult and important
+problems, and the design of algorithms for processing graphs is a major field of study.
+We consider depth-first search, breadth-first search, connectivity problems, and several
+algorithms and applications, including Kruskal’s and Prim’s algorithms for finding
+minimum spanning tree and Dijkstra’s and the Bellman-Ford algorithms for solving
+shortest-paths problems.
+6 CHAPTER 1 ■ Fundamentals
+Strings (Chapter 5) are an essential data type in modern computing applications.
+We consider a range of methods for processing sequences of characters. We begin with
+faster algorithms for sorting and searching when keys are strings. Then we consider
+substring search, regular expression pattern matching, and data-compression algorithms.
+Again, an introduction to advanced topics is given through treatment of some
+elementary problems that are important in their own right.
+Context (Chapter 6) helps us relate the material in the book to several other advanced
+fields of study, including scientific computing, operations research, and the theory of
+computing. We survey event-based simulation, B-trees, suffix arrays, maximum flow,
+and other advanced topics from an introductory viewpoint to develop appreciation for
+the interesting advanced fields of study where algorithms play a critical role. Finally, we
+describe search problems, reduction, and NP-completeness to introduce the theoretical
+underpinnings of the study of algorithms and relationships to material in this book.
+The study of algorithms is interesting and exciting because it is a new field
+(almost all the algorithms that we study are less than 50 years old, and some were just
+recently discovered) with a rich tradition (a few algorithms have been known for hundreds
+of years). New discoveries are constantly being made, but few algorithms are
+completely understood. In this book we shall consider intricate, complicated, and difficult
+algorithms as well as elegant, simple, and easy ones. Our challenge is to understand
+the former and to appreciate the latter in the context of scientific and commercial applications.
+In doing so, we shall explore a variety of useful tools and develop a style of
+algorithmic thinking that will serve us well in computational challenges to come.
+CHAPTER 1 ■ Fundamentals 7
+1.1 BASIC PROGRAMMING MODEL
+Our study of algorithms is based upon implementing them as programs written in
+the Java programming language. We do so for several reasons:
+■ Our programs are concise, elegant, and complete descriptions of algorithms.
+■ You can run the programs to study properties of the algorithms.
+■ You can put the algorithms immediately to good use in applications.
+These are important and significant advantages over the alternatives of working with
+English-language descriptions of algorithms.
+A potential downside to this approach is that we have to work with a specific programming
+language, possibly making it difficult to separate the idea of the algorithm
+from the details of its implementation. Our implementations are designed to mitigate
+this difficulty, by using programming constructs that are both found in many modern
+languages and needed to adequately describe the algorithms.
