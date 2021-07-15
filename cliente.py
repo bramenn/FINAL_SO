@@ -70,6 +70,7 @@ def leer_fichero(nombre_carpeta, nombre_fichero):
 """
 # PETICIONES DE SALIDA CLIENTE
 def HTTP_salientes(id_cliente, data, peticion, tipo):
+    mensaje = {}
     if peticion == "POST":
         if tipo == "creacion_c":
             ficheros = data
@@ -87,6 +88,11 @@ def HTTP_salientes(id_cliente, data, peticion, tipo):
                 "tipo": tipo,
                 "id_cliente": id_cliente,
                 "nombre_fichero": nombre_fichero,
+            }
+        if tipo == "ver_clientes":
+            mensaje = {
+                "peticion": peticion,
+                "tipo": tipo,
             }
         if tipo == "notificacion_LISTAR_F":
             ficheros = data
@@ -154,6 +160,7 @@ def menu():
     print("2- Listar ficheros de algun cliente")
     print("3- Ver contenido de un fichero")
     print("4- Eliminar un fichero")
+    print("5- Listar a todos los clientes")
     print("0- Salir")
     op = input("Ingrese la opcion: ")
     if op == "1":
@@ -176,6 +183,11 @@ def menu():
         if lista:
             lista.append("GET")
             lista.append("ver_f")
+    elif op == "5":
+        lista = eliminar_f()
+        if lista:
+            lista.append("GET")
+            lista.append("ver_clientes")
     elif op == "0":
         pass
     else:
@@ -188,7 +200,7 @@ def menu():
 
 #     while True:
 #         mi_socket = socket.socket()
-#         mi_socket.connect("https://61998a737ee3.ngrok.io")
+#         mi_socket.connect(host, port)
 
 #         data = menu()
 #         if data:
@@ -214,10 +226,14 @@ if __name__ == "__main__":
 
         data = menu()
         if data:
-            res = HTTP_salientes(data[0], data[1], data[2], data[3])
-
-        mi_socket.send(res.encode("ascii"))
+            res = HTTP_salientes(id_cliente=data[0], data=data[1], peticion=data[2], tipo=data[3])
+            mi_socket.send(res.encode('ascii'))
+            print(f"res.encode(ascii) {res.encode('ascii')}")
+        else:
+            print("Error creando la data")
         pet = mi_socket.recv(2048)
-        pet = pet.decode("ascii")
+        pet = pet.decode('ascii')
         HTTP_entrantes(pet)
+        # op = input("Cerrar conexion [S/N]").lower()
+        # if op == "s":
         mi_socket.close()
