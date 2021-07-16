@@ -86,7 +86,7 @@ def HTTP_salientes(id_cliente, peticion, tipo, contenido):
         if tipo == "notificacion_LISTAR_F":
             mensaje = listar_ficheros(id_cliente)
         if tipo == "eliminar_ficheros":            
-            mensaje = {"peticion": peticion, "tipo": tipo, "contenido": contenido}
+            mensaje = {"peticion": peticion, "tipo": tipo, "contenido": contenido, "id_cliente":id_cliente}
     elif peticion == "GET":
         if tipo == "notificacion_LISTAR_FICHs":
             mensaje = {"peticion": peticion, "tipo": tipo, "contenido": contenido}
@@ -118,6 +118,9 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
         elif HTTP["tipo"] == "sincro" and HTTP["id_cliente"] in lista_clientes:
             contenido = eliminar_fichero(HTTP["id_cliente_el"], HTTP["fichero"])
             return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
+        elif HTTP["tipo"] == "notificacion_OK" and HTTP["id_cliente"] in lista_clientes:
+            contenido = eliminar_fichero(HTTP["id_cliente_el"], HTTP["fichero"])
+            return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
         else:
             id_cliente_f = HTTP["id_cliente"] + ".txt"
             f = open(id_cliente_f, "w")
@@ -145,7 +148,7 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
             and HTTP["id_cliente"] in lista_clientes
             and HTTP["id_cliente_ver"] in lista_clientes
         ):
-            nombre_fichero = HTTP["id_cliente_ver"]
+            nombre_fichero = HTTP["nombre_fichero"]
             res = ver_f(HTTP["id_cliente_ver"], nombre_fichero + ".txt")
             if res:
                 contenido = "El contenido del fichero {} es:\n{}".format(nombre_fichero, res)
@@ -304,7 +307,10 @@ class Client(Thread):
             self.responder(res)
 
     def responder(self, res):
-        self.conn.send(res.encode("ascii"))
+        try:
+            self.conn.send(res.encode("ascii"))
+        except BrokenPipeError:
+            pass
 
 
 def verificar_sesion(hilos, hilo_nuevo):

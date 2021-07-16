@@ -46,18 +46,14 @@ NOTIFICACION
 
 
 def InfoCliente():
-    global ID_CLIENTE, CARPETA
-    if ID_CLIENTE == "":
-        id_uss = input("Ingrese el id del cliente: ")
-        ID_CLIENTE = id_uss
-    else:
-        id_uss = ID_CLIENTE
+    global CARPETA, ID_CLIENTE
+
     if CARPETA == "":
         nombre_carpeta = input("Ingrese el nombre de la capeta: ")
         CARPETA = nombre_carpeta
     else:
         nombre_carpeta = CARPETA
-    return [id_uss, nombre_carpeta]
+    return [ID_CLIENTE, nombre_carpeta]
 
 
 def ListarCarpeta():
@@ -70,10 +66,13 @@ def leer_fichero(nombre_carpeta, nombre_fichero):
     contenido = fd.read()
     return contenido
 
-def eliminar_ficheros(ficheros):
+def eliminar_ficheros(ficheros, id_pot):
     for fichero in ficheros:
-        os.remove(CARPETA+"/"+fichero)
-    return f"FICHERO ELIMINADO CORRECTAMENTE DEL USUARIO {ID_CLIENTE}"
+        try:
+            os.remove(CARPETA+"/"+fichero)
+        except FileNotFoundError:
+            pass
+    return f"EL CLIENTE {id_pot} ELIMINO CORRECTAMENTE EL FICHERO {fichero} DE SU CARPETA {CARPETA}"
     
 """
 {
@@ -103,6 +102,15 @@ def HTTP_salientes(id_cliente, data, peticion, tipo, id_cliente_el):
                 "id_cliente": id_cliente,
                 "id_cliente_el": id_cliente_el,
                 "fichero": fichero,
+            }
+        if tipo == "notificacion_OK":
+            fichero = data
+            mensaje = {
+                "peticion": peticion,
+                "tipo": tipo,
+                "id_cliente": ID_CLIENTE,
+                "id_cliente_el": id_cliente_el,
+                "ficheros": fichero,
             }
         if tipo == "sincro":
             fichero = data
@@ -154,8 +162,10 @@ def HTTP_entrantes(HTTP):
                 print("Respuesta del servidor: {}".format(contenido))
             if HTTP["tipo"] == "eliminar_ficheros":  # SE REVISA SI EL CLIENTE YA EXISTE
                 contenido = HTTP["contenido"]
-                contenido = eliminar_ficheros(contenido)
+                contenido = eliminar_ficheros(contenido, HTTP["id_cliente"])
                 print("Respuesta del servidor: {}".format(contenido))
+                return HTTP_salientes(id_cliente=HTTP["id_cliente"], data=contenido, peticion="POST", tipo="notificacion_OK", id_cliente_el=ID_CLIENTE)
+
         elif HTTP["peticion"] == "GET":
             if HTTP["tipo"] == "notificacion_LISTAR_FICHs":
                 contenido = ListarCarpeta()
@@ -186,7 +196,7 @@ def actu_regis():
 
 
 def listar_ficheros():
-    id_cli_search = input("Ingrese el ID del cliente: ")
+    id_cli_search = input("Ingrese el ID del cliente al que le quiere listar los ficheros: ")
 
     return [id_cli_search, ""]
 
@@ -215,6 +225,12 @@ def menu():
     print("5- Listar a todos los clientes")
     print("0- Salir")
     op = input("Ingrese la opcion: ")
+    global ID_CLIENTE, CARPETA
+    if ID_CLIENTE == "":
+        id_cliente = input("Ingrese su id: ")
+        ID_CLIENTE = id_cliente
+    else:
+        id_cliente = ID_CLIENTE
     lista = []
     if op == "1":
         lista = actu_regis()
@@ -222,7 +238,6 @@ def menu():
             lista.append("POST")
             lista.append("creacion_c")
     elif op == "2":
-        id_cliente = input("Ingrese su id: ")
         lista_aux = listar_ficheros()
         lista.append(id_cliente)
         lista.append(lista_aux[1])
@@ -230,15 +245,14 @@ def menu():
         lista.append("notificacion_LISTAR_F")
         lista.append(lista_aux[0])
     elif op == "3":
-        id_cliente = input("Ingrese su id: ")
         lista_aux = solitud_ver_f()
         lista.append(id_cliente)
         lista.append(lista_aux[1])
         lista.append("GET")
         lista.append("ver_f")
         lista.append(lista_aux[0])
+        print(lista)
     elif op == "4":
-        id_cliente = input("Ingrese su id: ")
         lista_aux = eliminar_f()
         lista.append(id_cliente)
         lista.append(lista_aux[1])
@@ -250,7 +264,8 @@ def menu():
         lista.append("GET")
         lista.append("ver_clientes")
     elif op == "0":
-        pass
+        print("HASTA LA PROXIMA")
+        return False
     else:
         print("Opcion incorrecta {}".format(op))
         return
@@ -279,14 +294,14 @@ def recibir(mi_socket):
         pet = pet.decode("ascii")
         pet = eval(pet)
         HTTP_entrantes(pet)
-        if pet["tipo"]=="notificacion_LISTAR_FICHs":
+        if pet["tipo"]=="notificacion_LISTAR_FICHs" or pet["tipo"]=="eliminar_ficheros":
             a = HTTP_entrantes(pet)
-            mi_socket.send(a.encode("ascii"))
+            enviar(mi_socket, a)
             # print(a)
         
         
 def enviar(mi_socket, contenido):
-        mi_socket.send(res.encode("ascii"))
+        mi_socket.send(contenido.encode("ascii"))
 
     
 if __name__ == "__main__":
@@ -316,5 +331,5 @@ if __name__ == "__main__":
             )
             enviar(mi_socket=mi_socket, contenido= res)
         else:
-            print("ERRORRRRRRR")
-
+            os._exit(os.EX_OK)
+            break
