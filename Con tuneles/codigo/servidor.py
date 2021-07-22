@@ -2,10 +2,11 @@ import json, socket
 import threading
 from threading import Thread
 from time import sleep
-
+from typing import Optional
 from pyngrok import ngrok
-
-
+from datetime import datetime
+import time
+import logging
 def registrar_cliente(lista_clientes):
     f = open("clientes.txt", "w")
     for cliente in lista_clientes:
@@ -52,7 +53,15 @@ def ver_f(id_cliente, nombre_fichero):
 
     # return ficheros
 
+def actualizar_ficheros(id_cliente: Optional[str], ficheros: Optional[list]):
+        f = open(id_cliente+".txt", "w") 
+        cliente = {"id_cliente": id_cliente, "ficheros": ficheros}
+        cliente = json.dumps(cliente)
+        f.write(cliente)
+        f.close()
 
+
+  
 def eliminar_fichero(id_cliente_el, fichero):
     f = open(str(id_cliente_el) + ".txt", "r+")
     data_fichero = f.read()
@@ -68,7 +77,6 @@ def eliminar_fichero(id_cliente_el, fichero):
                 cliente = {"id_cliente": id_cliente_el, "ficheros": data_fichero["ficheros"]}
                 CLI = json.dumps(cliente)
                 f.write(CLI)
-
                 return f"El archivo {fichero} se elimino correctamente en la carpeta de  {id_cliente_el}"
             else:
                 contador += 1
@@ -98,14 +106,10 @@ def HTTP_salientes(id_cliente, peticion, tipo, contenido):
 def HTTP_entrantes(HTTP, lista_clientes, contenido):
     if HTTP["peticion"] == "POST":
         if HTTP["tipo"] == "creacion_c" and not HTTP["id_cliente"] in lista_clientes:
-            id_cliente_f = HTTP["id_cliente"] + ".txt"
-            f = open(id_cliente_f, "w")
             lista_clientes.append(HTTP["id_cliente"])
             registrar_cliente(lista_clientes)
-            cliente = {"id_cliente": HTTP["id_cliente"], "ficheros": HTTP["ficheros"]}
-            CLI = json.dumps(cliente)
-            f.write(CLI)
-            f.close()
+            ficheros = HTTP["ficheros"]
+            actualizar_ficheros(id_cliente=HTTP["id_cliente"], ficheros=ficheros)
             contenido = "Se creo el cliente correctamente {}".format(HTTP["id_cliente"])
             return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
         elif (
@@ -122,17 +126,13 @@ def HTTP_entrantes(HTTP, lista_clientes, contenido):
             contenido = eliminar_fichero(HTTP["id_cliente_el"], HTTP["fichero"])
             return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
         else:
-            id_cliente_f = HTTP["id_cliente"] + ".txt"
-            f = open(id_cliente_f, "w")
-            cliente = {"id_cliente": HTTP["id_cliente"], "ficheros": HTTP["ficheros"]}
-            CLI = json.dumps(cliente)
-            f.write(CLI)
-            f.close()
+            actualizar_ficheros(id_cliente=HTTP["id_cliente"], ficheros=HTTP["ficheros"])
             contenido = "Se actualizo correctamente {}".format(HTTP["id_cliente"])
             return HTTP_salientes(HTTP["id_cliente"], "POST", "notificacion_OK", contenido)
 
     elif HTTP["peticion"] == "GET":
-        print(lista_clientes)
+        hora =  time.strftime("%H:%M:%S")
+        print(f"{hora} lista_clientes")
         if (
             HTTP["tipo"] == "notificacion_LISTAR_F"
             and HTTP["id_cliente"] in lista_clientes
@@ -194,30 +194,13 @@ class Sincronizacion(Thread):
         # print(data_fichero)
         # print(Client.id_cliente)
         aaa = listar_ficheros(self.id_cliente)
+        hora =  time.strftime("%H:%M:%S")
         if aaa == self.ficheros:
-            print(
-                "################################################################################"
-            )
-            print(
-                "################################################################################"
-            )
-            print(f"Cliente {self.id_cliente} sincronizado")
-            print(
-                "################################################################################"
-            )
-            print(
-                "################################################################################"
-            )
+            print(f"{hora} Cliente {self.id_cliente} sincronizado")
         else:
-            print(
-                "################################################################################"
-            )
-            print(
-                "################################################################################"
-            )
-            print(f"Cliente {self.id_cliente} no esta sincronizado")
+            print(f"{hora} Cliente {self.id_cliente} no esta sincronizado")
             lista_ficheros_faltantes = diff_list(aaa, self.ficheros)
-            print(lista_ficheros_faltantes)
+            actualizar_ficheros(id_cliente=self.id_cliente, ficheros= aaa)
             a = HTTP_salientes(
                 id_cliente=self.id_cliente,
                 peticion="POST",
@@ -225,12 +208,6 @@ class Sincronizacion(Thread):
                 contenido=lista_ficheros_faltantes,
             )
             Client.responder(self.Client, res=a)
-            print(
-                "################################################################################"
-            )
-            print(
-                "################################################################################"
-            )
 
     def pedir_f_cli(self):
         a = HTTP_salientes(
@@ -250,26 +227,16 @@ class Sincronizacion(Thread):
 
 class Client(Thread):
     """
-    Servidor eco - reenvía todo lo recibido.
+    Objeto hijo de la libreria Thread
     """
-
-    # def __init__(self,  *args, **kwargs):
-    #     super(Client, self).__init__(*args, **kwargs)
 
     def __init__(self, conn, addr):
         # Inicializar clase padre.
         Thread.__init__(self)
-        self._stop_event = threading.Event()
-        self.conn = conn
-        self.addr = addr
+        self.conn = conn #Conexion
+        self.addr = addr #Addres de la conexion
         self.id_cliente = ""
         self.Sincronizacion = None
-
-    def stop(self):
-        self._stop_event.set()
-
-    def stopped(self):
-        return self._stop_event.is_set()
 
     def run(self):
         while True:
@@ -285,10 +252,11 @@ class Client(Thread):
     ):
         pet = self.conn.recv(100000)
         if pet != "NoneType":
-            pet = pet.decode("ascii")
+            pet = pet.decode("ascii") # Decodifica la peticion en ascii
             lista_clientes = cargar_clientes()
             pet = eval(pet)
-            # print(f"LO QUE LLEGA DEL CLIENTE {pet}")
+            hora =  time.strftime("%H:%M:%S")            
+            print(f"{hora} LO QUE LLEGA DEL CLIENTE {pet}")
             if self.Sincronizacion and pet["tipo"] == "sincro":
                 self.id_cliente = pet["id_cliente"]
                 self.Sincronizacion.ficheros = pet["ficheros"]
@@ -322,33 +290,31 @@ def verificar_sesion(hilos, hilo_nuevo):
 
 if __name__ == "__main__":
 
-    host = "localhost"
-    port = 8000
+    host = "localhost" # Direccion IP
+    port = 8000 # Puerto de practica
 
     # Create a TCP socket
     mi_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Bind a local socket to the port
-    server_address = ("", port)
+    server_address = (host, port)
 
     mi_socket.bind(server_address)
     mi_socket.listen(5)
-
-    public_url = ngrok.connect(port, "tcp", options={"remote_addr": "{}:{}".format(host, port)})
-    print('ngrok tunnel "{}" -> "tcp://127.0.0.1:{}/"'.format(public_url, port))
-    hilos = []
+    hora =  time.strftime("%H:%M:%S")
+    print(f"{hora} Escuchando...")
+    # public_url = ngrok.connect(port, "tcp", options={"remote_addr": "{}:{}".format(host, port)})
+    # print('ngrok tunnel "{}" -> "tcp://127.0.0.1:{}/"'.format(public_url, port))
+    hilos = []  # Se crea una lista de hilos vacia
     while True:
         connection = None
         try:
             conexion, addr = mi_socket.accept()
+            hora =  time.strftime("%H:%M:%S")
+            print(f"{hora} Nueva conexion establecida", addr)
             c = Client(conn=conexion, addr=addr)
             c.start()
             hilos.append(c)
-            # if verificar_sesion(hilos, c):
-            #     print("Este hilo no se va crear")
-            #     c.stop()
-            #     c.join()
-            print("Nueva conexion establecida", addr)
         except KeyboardInterrupt:
             print(" Shutting down server.")
             connection.close()

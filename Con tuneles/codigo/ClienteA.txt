@@ -1,0 +1,1 @@
+{"id_cliente": "ClienteA", "ficheros": ["8.txt", "7.txt", "6.txt", "9.txt"]}

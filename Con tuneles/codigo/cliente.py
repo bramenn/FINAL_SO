@@ -313,9 +313,6 @@ if __name__ == "__main__":
     hilo = Thread(target=recibir, args=[mi_socket])
     hilo.start()
     while True:
-        # Create a TCP socket
-
-        # Connect to the server with the socket via our ngrok tunnel
         data = menu()
         if data:
             if len(data) > 4:
