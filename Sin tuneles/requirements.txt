@@ -1,3 +1,0 @@
-pyngrok==5.0.5
-pytest==6.0.1
-
